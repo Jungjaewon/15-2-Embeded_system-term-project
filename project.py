@@ -13,11 +13,44 @@ import thread
 import Rpi.GPIO as GPIO
 
 
-
+Motor = 0
+Birght = 0
+Msg = ''
+file_path = 'image.jpg'
+delay = ''
+send_mail = ''
+num_of_picture = ''
+back_setting = ''
+On_setting == ''
 ############## Message recieve and send image########
-def fileSend(): 
+# msg fotmat delay/send_mail/num_of_picture/back_setting/On_setting
+def fileSend():
+ while True:
+  msg = socktet.recv()
+  tuple = msg.split('/')
+
+  delay = tuple[0]
+  send_mail = tuple[1]
+  num_of_picture = tuple[2]
+  back_setting = tuple[3]
+  On_setting = tuple[4]
+
+  if On_setting == "0": # Send mail
+    print On_setting
+    for i in int( num_of_picture ):
+     
 
 
+  elif On_setting == "1": # Send file to app
+    print On_setting
+    for i in int( num_of_picture ):
+     cv2.imwrite(file_path, frame2)
+     f = open( file_path , 'r')
+     l = f.read()
+     while(l):
+      socket.send(l)
+      l = f.read()
+     f.close()
 
 
 
@@ -31,6 +64,7 @@ socket = None
 if camera is None:
  print 'Camera Error\n'
  print 'Program will exit'
+ os_exit(0)
 
 
 ##################################################
@@ -61,6 +95,7 @@ socket.listen(5)
 client , addr = socket.accept()
 
 ##################################################
+
 ################### Image process  ###############
 
 while( camera.isOpened() ):
