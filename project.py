@@ -12,6 +12,10 @@ import os
 import thread
 import Rpi.GPIO as GPIO
 
+import smtplib
+#from email.MTMEImage import MIMEImage
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
 
 Motor = 0
 Birght = 0
@@ -22,28 +26,62 @@ send_mail = ''
 num_of_picture = ''
 back_setting = ''
 On_setting == ''
+f_num = 0;
+smtp = smtplib.SMTP(HOST)
+
+
 ############## Message recieve and send image########
 # msg fotmat delay/send_mail/num_of_picture/back_setting/On_setting
+# Or b+ b0 b- m+ m0 m- BG0 BG1 BG2 BG3 BG4 
 def fileSend():
+
  while True:
   msg = socktet.recv()
   tuple = msg.split('/')
 
   delay = tuple[0]
-  send_mail = tuple[1]
-  num_of_picture = tuple[2]
-  back_setting = tuple[3]
-  On_setting = tuple[4]
 
-  if On_setting == "0": # Send mail
+  if len(tuple) != 1:
+   send_mail = tuple[1]
+   num_of_picture = tuple[2]
+   back_setting = tuple[3]
+   On_setting = tuple[4]
+
+
+  
+  if delay == 'm+':
+    Mortor = Mortor + 1
+  elif delay == 'm0':
+    Mortor = 0
+  elif delay == 'm-':
+    Mortor = Mortor - 1
+
+  elif delay == 'b+':
+    Bright = Bright + 1
+  elif delay == 'b0':
+    Bright = 0
+  elif delay == 'b-':
+    Bright = Bright - 1
+
+  elif 'BG' in delay and len(delay) == 3:
+    back_setting = int(delay[2])
+
+  elif On_setting == "0": # Send mail
     print On_setting
     for i in int( num_of_picture ):
-     
-
+     time.sleep(3)
+     cv2.imwrite(file_path, frame2)
+     f = open( file_path , 'r')
+     l = f.read()
+     while(l):
+      socket.send(l)
+      l = f.read()
+     f.close()
 
   elif On_setting == "1": # Send file to app
     print On_setting
     for i in int( num_of_picture ):
+     time.sleep(3)
      cv2.imwrite(file_path, frame2)
      f = open( file_path , 'r')
      l = f.read()
