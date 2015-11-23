@@ -12,6 +12,7 @@ import RPi.GPIO as GPIO
 
 import smtplib
 #from email.MTMEImage import MIMEImage
+from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 
@@ -47,6 +48,7 @@ def fileSend():
  global num_of_picture
  global back_setting
  global On_setting
+ global send_mail
  while True:
   msg = client.recv(1024)
   tuple = msg.split('/')
@@ -58,7 +60,7 @@ def fileSend():
    num_of_picture = tuple[2]
    back_setting = tuple[3]
    On_setting = tuple[4]
-  
+ 
   if delay == 'm+':
     Motor = Motor + 1
     print Motor
@@ -83,20 +85,6 @@ def fileSend():
     back_setting = int(delay[2])
     print back_setting
 
-  elif On_setting == "0": # Send mail
-    print On_setting
-    num = "".join( num_of_picture )
-    numi = range(0 , int( num ) )
-    for i in numi :
-     time.sleep(2)
-     cv2.imwrite(file_path, frame)
-     f = open( file_path , 'r')
-     l = f.read()
-     while(l):
-      client.send(l)
-      l = f.read()
-     f.close()
-
   elif On_setting == "1": # Send file to app
     print On_setting
     num = "".join( num_of_picture )
@@ -110,7 +98,24 @@ def fileSend():
       client.send(l)
       l = f.read()
      f.close()
-     MailSend()
+
+  elif On_setting == "0": # Send mail 
+    print On_setting
+    num = "".join( num_of_picture )
+    numi = range(1 , int( num ) )
+    time.sleep(2)
+    cv2.imwrite(file_path, frame)
+    f = open( file_path , 'r')
+    l = f.read()
+    while(l):
+     client.send(l)
+     l = f.read()
+    f.close()
+    MailSend()
+    for i in numi :
+     cv2.imwrite(file_path, frame)
+     MailSend() 	
+     
 
 #####################################################
 
@@ -122,11 +127,10 @@ def MailSend():
 	msg = MIMEMultipart()
 	msg['Subject'] = 'PhotoBox'
  	
-	me = 'woodcook486@naver.com'
-	
+	me = 'woodcook48@gmail.com'
 	family = send_mail
 	msg['From'] = me
-	msg['To'] = family 
+	msg['To'] = send_mail
 	msg.preamble = 'PhotoBox mail'
  
 
@@ -142,8 +146,11 @@ def MailSend():
  
 	# another server
 	s = smtplib.SMTP_SSL('smtp.gmail.com',465)
-	s.login("woodcook486","df125qwer!")
-	s.sendmail(me, you, msg.as_string())
+	#s.ehlo()
+	#s.starttls()
+	#s.ehlo()
+	s.login("woodcook48","df125qwer!")
+	s.sendmail(me, [send_mail], msg.as_string())
 	s.quit()
 
 ###############################################################
