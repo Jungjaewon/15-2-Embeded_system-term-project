@@ -250,6 +250,7 @@ def Count( count ):
  global text
  cnt = range( 0 , count)
  for i in cnt:
+
   text = str(i)
   check = 1 # true
   time.sleep(1)
@@ -271,6 +272,7 @@ while( camera.isOpened() ):
 
  #tmp = camera.get( cv2.cv.CV_CAP_PROP_BRIGHTNESS )
  #print "Bright : " + str(tmp)
+ gray_frame = cv2.cvtColor(frame , cv2.COLOR_GRAY2RGB)
  if check == 1:
   cv2.putText(frame, text, (210, 320), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 255), 4)
  cv2.imshow("Image", frame)
