@@ -9,23 +9,17 @@ from socket import *
 import os
 import thread
 import RPi.GPIO as GPIO
-
+import random
+import sys
+import signal
 import smtplib
 #from email.MTMEImage import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 
-################### GPIO Setting## ###############
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(23, GPIO.OUT)
-GPIO.setup(24, GPIO.OUT)
-GPIO.setup(23, False)
-GPIO.setup(24, False)
-##################################################
-
-Motor = 0
-Bright = 0
+Motor = 90
+Bright = 0.5
 Msg = ''
 file_path = 'image.jpg'
 delay = ''
@@ -34,8 +28,43 @@ num_of_picture = ''
 back_setting = ''
 On_setting = ''
 f_num = 0;
-#smtp = smtplib.SMTP(HOST)
+camera = ''
+frame = ''
+check = 0 # false
+text = ''
 
+###################Signal Handler   #####################
+def sinal_handler(signal , frame):
+	print "Interrupt!!!!"
+	GPIO.cleanup()
+	sys.exit(0)
+#########################################################
+
+
+################### GPIO Setting## ###############
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(14, GPIO.OUT)
+GPIO.setup(15, GPIO.OUT)
+GPIO.setup(18, GPIO.OUT)
+
+GPIO.output(15, GPIO.LOW) # RED
+GPIO.output(14, GPIO.LOW) # GREEN
+pwm = GPIO.PWM(18, 50)
+#pwm.start(7.5)
+##################################################
+
+################### Socket Setting ###############
+signal.signal(signal.SIGINT , sinal_handler)
+socket = socket(AF_INET , SOCK_STREAM)
+socket.setsockopt(SOL_SOCKET , SO_REUSEADDR , 1)
+
+port = 7500
+
+
+socket.bind(('' , port))
+socket.listen(5)
+
+##################################################
 
 ############## Message recieve and send image########
 # msg fotmat delay/send_mail/num_of_picture/back_setting/On_setting
@@ -49,12 +78,29 @@ def fileSend():
  global back_setting
  global On_setting
  global send_mail
+ global camera
+ global check
+ global text
+ global pwm
+ sound_file = ""
+ string = ""
+ GPIO.output(14, GPIO.HIGH) # GREEN
+ client , addr = socket.accept()
+ print "accept"
+ GPIO.output(14, GPIO.LOW) # GREEN
+ GPIO.output(15, GPIO.HIGH) # RED
  while True:
   msg = client.recv(1024)
   tuple = msg.split('/')
   print tuple
   delay = tuple[0]
 
+  if msg == '':
+   print "User Log out"
+   pwm.stop()
+   GPIO.output(15, GPIO.LOW) # RED
+   thread.start_new_thread(fileSend,())
+   return
   if len(tuple) != 1:
    send_mail = tuple[1]
    num_of_picture = tuple[2]
@@ -62,23 +108,41 @@ def fileSend():
    On_setting = tuple[4]
  
   if delay == 'm+':
-    Motor = Motor + 1
+    Motor = Motor + 5
+    duty = float(Motor) / 10.0 + 2.5
+    pwm.start(2.5)
+    #pwm.ChangeDutyCycle(2.5)
+    time.sleep(2)
+    #pwm.stop()
     print Motor
   elif delay == 'm0':
-    Motor = 0
+    Motor = 90
+    duty = float(Motor) / 10.0 + 2.5
+    pwm.start(7.5)
+    #pwm.ChangeDutyCycle(7.5)
+    time.sleep(2)
+    #pwm.stop()
     print Motor
   elif delay == 'm-':
-    Motor = Motor - 1
+    Motor = Motor - 5
+    duty = float(Motor) / 10.0 + 2.5
+    pwm.start(12.5)
+    #pwm.ChangeDutyCycle(12.5)
+    time.sleep(2)
+    #pwm.stop()
     print Motor
 
   elif delay == 'b+':
-    Bright = Bright + 1
+    Bright = Bright + 0.1
+    camera.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, Bright)
     print Bright
   elif delay == 'b0':
-    Bright = 0
+    Bright = 0.5
+    camera.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, Bright)
     print Bright
   elif delay == 'b-':
-    Bright = Bright - 1
+    Bright = Bright - 0.1
+    camera.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, Bright)
     print Bright
 
   elif 'BG' in delay and len(delay) == 3:
@@ -90,7 +154,15 @@ def fileSend():
     num = "".join( num_of_picture )
     numi = range(0 , int( num ) )
     for i in numi :
-     time.sleep(2)
+     for i in range( 0 , int(delay)):
+      text = str( int(delay) - i)
+      check = 1 # true
+      time.sleep(1)
+      check = 0 # false
+     time.sleep(1)
+     sound_file = str(random.randrange(1,6)) + ".mp3"
+     string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
+     os.system(string)
      cv2.imwrite(file_path, frame)
      f = open( file_path , 'r')
      l = f.read()
@@ -103,7 +175,15 @@ def fileSend():
     print On_setting
     num = "".join( num_of_picture )
     numi = range(1 , int( num ) )
-    time.sleep(2)
+    for i in range( 0 , int(delay)):
+     text = str( int(delay) - i)
+     check = 1 # true
+     time.sleep(1)
+     check = 0 # false
+    time.sleep(1)
+    sound_file = str(random.randrange(1,6)) + ".mp3"
+    string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
+    os.system(string)
     cv2.imwrite(file_path, frame)
     f = open( file_path , 'r')
     l = f.read()
@@ -113,6 +193,15 @@ def fileSend():
     f.close()
     MailSend()
     for i in numi :
+     for i in range( 0 , int(delay)):
+      text = str( int(delay) - i)
+      check = 1 # true
+      time.sleep(1)
+      check = 0 # false
+     time.sleep(1)
+     sound_file = str(random.randrange(1,6)) + ".mp3"
+     string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
+     os.system(string)
      cv2.imwrite(file_path, frame)
      MailSend() 	
      
@@ -155,21 +244,17 @@ def MailSend():
 
 ###############################################################
 
+################## Count function #######################
 
-################### Socket Setting ###############
-
-socket = socket(AF_INET , SOCK_STREAM)
-socket.setsockopt(SOL_SOCKET , SO_REUSEADDR , 1)
-
-port = 7500
-
-
-socket.bind(('' , port))
-socket.listen(5)
-
-client , addr = socket.accept()
-print "accpet"
-##################################################
+def Count( count ):
+ global text
+ cnt = range( 0 , count)
+ for i in cnt:
+  text = str(i)
+  check = 1 # true
+  time.sleep(1)
+  check = 0 # false
+#########################################################
 
 ################### Image process  ###############
 
@@ -183,11 +268,16 @@ if camera is None:
 thread.start_new_thread(fileSend,())
 while( camera.isOpened() ):
  val, frame = camera.read()
- cv2.imshow("Image", frame)
 
+ #tmp = camera.get( cv2.cv.CV_CAP_PROP_BRIGHTNESS )
+ #print "Bright : " + str(tmp)
+ if check == 1:
+  cv2.putText(frame, text, (210, 320), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 255), 4)
+ cv2.imshow("Image", frame)
  key = cv2.waitKey(30)
 
  if key == ord('q'):
+      GPIO.cleanup()
       break
 
 ##################################################
