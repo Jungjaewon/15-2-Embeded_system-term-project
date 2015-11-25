@@ -295,7 +295,43 @@ while( camera.isOpened() ):
  # eyes = eye_cascade.detectMultiScale(roi_gray)
  # for (ex,ey,ew,eh) in eyes:
  #  cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+ # generate Gaussian pyramid for A
+ G = frame.copy()
+ gpA = [G]
+ for i in xrange(6):
+	G = cv2.pyrDown(G)
+	gpA.append(G)
 
+ # generate Gaussian pyramid for B
+ G = frame.copy()
+ gpB = [G]
+ for i in xrange(6):
+	G = cv2.pyrDown(G)
+	gpB.append(G)
+
+
+ # generate Laplacian Pyramid for A
+ lpA = [gpA[5]]
+ for i in xrange(5,0,-1):
+	GE = cv2.pyrUp(gpA[i])
+	L = cv2.subtract(gpA[i-1],GE)
+	lpA.append(L)
+
+
+ # generate Laplacian Pyramid for B
+ lpB = [gpB[5]]
+ for i in xrange(5,0,-1):
+	GE = cv2.pyrUp(gpB[i])
+	L = cv2.subtract(gpB[i-1],GE)
+	lpB.append(L)
+
+ # Now add left and right halves of images in each level
+ LS = []
+ for la,lb in zip(lpA,lpB):
+	rows,cols,dpt = la.shape
+	ls = numpy.hstack((la[:,0:cols/2], lb[:,cols/2:]))
+	LS.append(ls)
+ frame = numpy.hstack((frame[:,cols/2:],frame[:,:cols/2]))
  if check == 1:
   cv2.putText(frame, text, (210, 320), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 255), 4)
  #cv2.imshow("mask", mask)
