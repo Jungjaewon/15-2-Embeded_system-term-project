@@ -272,6 +272,7 @@ while( camera.isOpened() ):
 
  #tmp = camera.get( cv2.cv.CV_CAP_PROP_BRIGHTNESS )
  #print "Bright : " + str(tmp)
+ #bframe = cv2.blur(frame, (10,10))
  #frame = cv2.flip(frame,0)
  #frame = cv2.cvtColor(frame , cv2.COLOR_BGR2GRAY)
  #hsv = cv2.cvtColor(frame , cv2.COLOR_BGR2HSV)
