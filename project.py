@@ -48,9 +48,11 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(14, GPIO.OUT)
 GPIO.setup(15, GPIO.OUT)
 GPIO.setup(18, GPIO.OUT)
+GPIO.setup(23, GPIO.OUT)
 
 GPIO.output(15, GPIO.LOW) # RED
 GPIO.output(14, GPIO.LOW) # GREEN
+GPIO.output(23, GPIO.LOW) # BLUE
 pwm = GPIO.PWM(18, 50)
 #pwm.start(7.5)
 ##################################################
@@ -164,6 +166,7 @@ def fileSend():
       check = 1 # true
       time.sleep(1)
       check = 0 # false
+     shoot = 'Y'
      time.sleep(1)
      sound_file = str(random.randrange(1,6)) + ".mp3"
      string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
@@ -205,13 +208,16 @@ def fileSend():
       check = 1 # true
       time.sleep(1)
       check = 0 # false
+     shoot = 'Y'
      time.sleep(1)
      sound_file = str(random.randrange(1,6)) + ".mp3"
      string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
      os.system(string)
      while shoot == 'Y':
        tm = 0
-     MailSend() 	
+     MailSend()
+  else :
+    print 'Error'	
      
 
 #####################################################
@@ -334,7 +340,9 @@ while( camera.isOpened() ):
 
  if shoot == 'Y' and check == 0:
   print 'shoot'
+  GPIO.output(23, GPIO.HIGH) # BLUE
   cv2.imwrite(file_path, frame)
+  GPIO.output(23, GPIO.LOW) # BLUE
   shoot = 'N'
  if check == 1:
   cv2.putText(frame, text, (210, 320), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 255), 4)
