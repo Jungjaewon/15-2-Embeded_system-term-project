@@ -33,6 +33,7 @@ camera = ''
 frame = ''
 check = 0 # false
 text = ''
+shoot = ''
 
 ###################Signal Handler   #####################
 def sinal_handler(signal , frame):
@@ -83,6 +84,7 @@ def fileSend():
  global check
  global text
  global pwm
+ global shoot
  sound_file = ""
  string = ""
  GPIO.output(14, GPIO.HIGH) # GREEN
@@ -101,12 +103,14 @@ def fileSend():
    pwm.stop()
    GPIO.output(15, GPIO.LOW) # RED
    thread.start_new_thread(fileSend,())
+   back_setting = 0
    return
   if len(tuple) != 1:
    send_mail = tuple[1]
    num_of_picture = tuple[2]
    back_setting = tuple[3]
    On_setting = tuple[4]
+   shoot = 'Y'
  
   if delay == 'm+':
     Motor = Motor + 5
@@ -147,7 +151,7 @@ def fileSend():
     print Bright
 
   elif 'BG' in delay and len(delay) == 3:
-    back_setting = int(delay[2])
+    back_setting = delay[2]
     print back_setting
 
   elif On_setting == "1": # Send file to app
@@ -164,7 +168,8 @@ def fileSend():
      sound_file = str(random.randrange(1,6)) + ".mp3"
      string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
      os.system(string)
-     cv2.imwrite(file_path, frame)
+     while shoot == 'Y':
+       tm = 0
      f = open( file_path , 'r')
      l = f.read()
      while(l):
@@ -185,7 +190,8 @@ def fileSend():
     sound_file = str(random.randrange(1,6)) + ".mp3"
     string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
     os.system(string)
-    cv2.imwrite(file_path, frame)
+    while shoot == 'Y':
+       tm = 0
     f = open( file_path , 'r')
     l = f.read()
     while(l):
@@ -203,7 +209,8 @@ def fileSend():
      sound_file = str(random.randrange(1,6)) + ".mp3"
      string = "mplayer -vo x11 /home/pi/embeded/" + sound_file
      os.system(string)
-     cv2.imwrite(file_path, frame)
+     while shoot == 'Y':
+       tm = 0
      MailSend() 	
      
 
@@ -258,6 +265,8 @@ def Count( count ):
 #########################################################
 
 ################### Image process  ###############
+lower_skin = numpy.array([0,59,0])
+upper_skin = numpy.array([128,175,255])
 
 camera = cv2.VideoCapture(0)
 
@@ -272,66 +281,61 @@ while( camera.isOpened() ):
 
  #tmp = camera.get( cv2.cv.CV_CAP_PROP_BRIGHTNESS )
  #print "Bright : " + str(tmp)
- #bframe = cv2.blur(frame, (10,10))
- #frame = cv2.flip(frame,0)
- #frame = cv2.cvtColor(frame , cv2.COLOR_BGR2GRAY)
- #hsv = cv2.cvtColor(frame , cv2.COLOR_BGR2HSV)
- #lower_skin = numpy.array([0,59,0])
- #upper_skin = numpy.array([128,175,255])
 
- #mask = cv2.inRange(hsv , lower_skin, upper_skin)
- 
- #res = cv2.bitwise_and(frame , frame, mask= mask)
- #face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
- #eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+ if back_setting == '1' : # Gray
+  frame = cv2.cvtColor(frame , cv2.COLOR_BGR2GRAY)
 
- #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+ elif back_setting == '2' : # Flip
+  frame = cv2.flip(frame,0)
 
- #faces = face_cascade.detectMultiScale(gray, 1.3, 5)
- #for (x,y,w,h) in faces:
- # cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
- # roi_gray  = gray[y:y+h, x:x+w]
- # roi_color = frame[y:y+h, x:x+w]
- # eyes = eye_cascade.detectMultiScale(roi_gray)
- # for (ex,ey,ew,eh) in eyes:
- #  cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
- # generate Gaussian pyramid for A
- G = frame.copy()
- gpA = [G]
- for i in xrange(6):
+ elif back_setting == '3' : # Trace
+  hsv = cv2.cvtColor(frame , cv2.COLOR_BGR2HSV)
+  mask = cv2.inRange(hsv , lower_skin, upper_skin)
+  res = frame = cv2.bitwise_and(frame , frame, mask= mask)
+
+ elif back_setting == '4' : # Half
+  # generate Gaussian pyramid for A
+  G = frame.copy()
+  gpA = [G]
+  for i in xrange(6):
 	G = cv2.pyrDown(G)
 	gpA.append(G)
 
- # generate Gaussian pyramid for B
- G = frame.copy()
- gpB = [G]
- for i in xrange(6):
+  # generate Gaussian pyramid for B
+  G = frame.copy()
+  gpB = [G]
+  for i in xrange(6):
 	G = cv2.pyrDown(G)
 	gpB.append(G)
 
 
- # generate Laplacian Pyramid for A
- lpA = [gpA[5]]
- for i in xrange(5,0,-1):
+  # generate Laplacian Pyramid for A
+  lpA = [gpA[5]]
+  for i in xrange(5,0,-1):
 	GE = cv2.pyrUp(gpA[i])
 	L = cv2.subtract(gpA[i-1],GE)
 	lpA.append(L)
 
 
- # generate Laplacian Pyramid for B
- lpB = [gpB[5]]
- for i in xrange(5,0,-1):
+  # generate Laplacian Pyramid for B
+  lpB = [gpB[5]]
+  for i in xrange(5,0,-1):
 	GE = cv2.pyrUp(gpB[i])
 	L = cv2.subtract(gpB[i-1],GE)
 	lpB.append(L)
 
- # Now add left and right halves of images in each level
- LS = []
- for la,lb in zip(lpA,lpB):
+  # Now add left and right halves of images in each level
+  LS = []
+  for la,lb in zip(lpA,lpB):
 	rows,cols,dpt = la.shape
 	ls = numpy.hstack((la[:,0:cols/2], lb[:,cols/2:]))
 	LS.append(ls)
- frame = numpy.hstack((frame[:,cols/2:],frame[:,:cols/2]))
+  frame = numpy.hstack((frame[:,cols/2:],frame[:,:cols/2]))
+
+ if shoot == 'Y' and check == 0:
+  print 'shoot'
+  cv2.imwrite(file_path, frame)
+  shoot = 'N'
  if check == 1:
   cv2.putText(frame, text, (210, 320), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 255), 4)
  #cv2.imshow("mask", mask)
