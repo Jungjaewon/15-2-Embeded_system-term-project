@@ -19,7 +19,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 
-Motor = 90
+Motor = 7.5
 Bright = 0.5
 Msg = ''
 file_path = 'image.jpg'
@@ -38,6 +38,7 @@ shoot = ''
 ###################Signal Handler   #####################
 def sinal_handler(signal , frame):
 	print "Interrupt!!!!"
+        pwm.stop()
 	GPIO.cleanup()
 	sys.exit(0)
 #########################################################
@@ -45,16 +46,16 @@ def sinal_handler(signal , frame):
 
 ################### GPIO Setting## ###############
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(14, GPIO.OUT)
-GPIO.setup(15, GPIO.OUT)
-GPIO.setup(18, GPIO.OUT)
-GPIO.setup(23, GPIO.OUT)
+GPIO.setup(14, GPIO.OUT) # GREEN
+GPIO.setup(15, GPIO.OUT) # RED
+GPIO.setup(18, GPIO.OUT) # SERVO
+GPIO.setup(23, GPIO.OUT) # BLUE
 
 GPIO.output(15, GPIO.LOW) # RED
 GPIO.output(14, GPIO.LOW) # GREEN
 GPIO.output(23, GPIO.LOW) # BLUE
 pwm = GPIO.PWM(18, 50)
-#pwm.start(7.5)
+pwm.start(7.5)
 ##################################################
 
 ################### Socket Setting ###############
@@ -115,28 +116,22 @@ def fileSend():
    shoot = 'Y'
  
   if delay == 'm+':
-    Motor = Motor + 5
-    duty = float(Motor) / 10.0 + 2.5
-    pwm.start(2.5)
-    #pwm.ChangeDutyCycle(2.5)
+    Motor = Motor + 1.0
+    #duty = float(Motor) / 10.0 + 2.5
+    pwm.ChangeDutyCycle(Motor)
     time.sleep(2)
-    #pwm.stop()
     print Motor
   elif delay == 'm0':
-    Motor = 90
-    duty = float(Motor) / 10.0 + 2.5
-    pwm.start(7.5)
-    #pwm.ChangeDutyCycle(7.5)
+    Motor = 7.5
+    #duty = float(Motor) / 10.0 + 2.5
+    pwm.ChangeDutyCycle(Motor)
     time.sleep(2)
-    #pwm.stop()
     print Motor
   elif delay == 'm-':
-    Motor = Motor - 5
-    duty = float(Motor) / 10.0 + 2.5
-    pwm.start(12.5)
-    #pwm.ChangeDutyCycle(12.5)
+    Motor = Motor - 1.0
+    #duty = float(Motor) / 10.0 + 2.5
+    pwm.ChangeDutyCycle(Motor)
     time.sleep(2)
-    #pwm.stop()
     print Motor
 
   elif delay == 'b+':
